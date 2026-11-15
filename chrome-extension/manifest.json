@@ -1,0 +1,27 @@
+
+{
+  "manifest_version": 3,
+  "name": "VECTOR - AI Browser Assistant",
+  "version": "1.0.0",
+  "description": "Your personal AI browser assistant.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting",
+    "activeTab",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open VECTOR"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+}
