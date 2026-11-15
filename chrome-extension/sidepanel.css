@@ -1,0 +1,167 @@
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #080d19;
+  color: #eaf2ff;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 14px;
+  background: #111c30;
+  border-bottom: 1px solid #203a60;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #008cff, #7547ff);
+  font-size: 25px;
+  font-weight: bold;
+  box-shadow: 0 0 15px #087cff66;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: 3px;
+  color: #55baff;
+}
+
+header p {
+  margin: 4px 0 0;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #8298b8;
+}
+
+.status {
+  margin-left: auto;
+  color: #40e7a1;
+  font-size: 10px;
+}
+
+main {
+  padding: 15px;
+}
+
+.welcome {
+  padding: 15px;
+  background: #101c30;
+  border: 1px solid #203c61;
+  border-radius: 12px;
+}
+
+.welcome h2 {
+  color: #62baff;
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.welcome p {
+  font-size: 12px;
+  color: #9db1cd;
+  margin: 0;
+}
+
+#chat {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 200px;
+}
+
+.message {
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.bot {
+  background: #13243b;
+  border: 1px solid #25486e;
+  align-self: flex-start;
+  max-width: 95%;
+}
+
+.user {
+  background: #073b70;
+  border: 1px solid #087cff;
+  align-self: flex-end;
+  max-width: 95%;
+}
+
+.commands {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+}
+
+.commands button {
+  flex: 1;
+  background: #13243b;
+  color: #72c6ff;
+  border: 1px solid #31557d;
+  padding: 10px 5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.commands button:hover {
+  background: #1b3557;
+}
+
+.input-area {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  position: sticky;
+  bottom: 0;
+  background: #080d19;
+}
+
+#userInput {
+  flex: 1;
+  min-width: 0;
+  background: #111c30;
+  border: 1px solid #31557d;
+  border-radius: 10px;
+  color: white;
+  padding: 13px;
+  outline: none;
+}
+
+#userInput:focus {
+  border-color: #168fff;
+}
+
+#sendButton {
+  width: 45px;
+  border: none;
+  border-radius: 10px;
+  background: #087cff;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+footer {
+  text-align: center;
+  color: #536a89;
+  font-size: 9px;
+  padding: 12px;
+}
