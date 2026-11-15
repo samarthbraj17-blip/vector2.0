@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VECTOR AI Assistant</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo">V</div>
+    <div>
+      <h1>VECTOR</h1>
+      <p>AI BROWSER ASSISTANT</p>
+    </div>
+    <span class="status">ONLINE</span>
+  </header>
+
+  <main>
+    <div class="welcome">
+      <h2>Hello! I'm VECTOR.</h2>
+      <p>Your personal browser assistant is ready.</p>
+    </div>
+
+    <div id="chat">
+      <div class="message bot">
+        Hello! What would you like me to do?
+      </div>
+    </div>
+  </main>
+
+  <div class="commands">
+    <button data-command="tabs">Show tabs</button>
+    <button data-command="page">Read page</button>
+  </div>
+
+  <div class="input-area">
+    <input
+      type="text"
+      id="userInput"
+      placeholder="Ask VECTOR anything..."
+      autocomplete="off"
+    >
+    <button id="sendButton">➤</button>
+  </div>
+
+  <footer>
+    VECTOR CHROME ASSISTANT v1.0
+  </footer>
+
+  <script src="sidepanel.js"></script>
+
+</body>
+</html>
