@@ -1,19 +1,19 @@
 
+
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("VECTOR Chrome Assistant installed!");
+  console.log("VECTOR installed!");
 
   chrome.sidePanel.setPanelBehavior({
     openPanelOnActionClick: true
   });
 });
 
-// Open a website
 async function openWebsite(url) {
   try {
     const parsed = new URL(url);
 
     if (!["http:", "https:"].includes(parsed.protocol)) {
-      throw new Error("Only HTTP and HTTPS websites are allowed.");
+      throw new Error("Invalid website address.");
     }
 
     const tab = await chrome.tabs.create({
@@ -27,16 +27,46 @@ async function openWebsite(url) {
   }
 }
 
-// Search Google
 async function searchGoogle(query) {
-  const url =
+  return openWebsite(
     "https://www.google.com/search?q=" +
-    encodeURIComponent(query);
-
-  return openWebsite(url);
+    encodeURIComponent(query)
+  );
 }
 
-// Get all Chrome tabs
+// FREE ONLINE WEB SEARCH
+async function searchWeb(query) {
+  try {
+    const url =
+      "https://html.duckduckgo.com/html/?q=" +
+      encodeURIComponent(query);
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Accept": "text/html"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Search service returned " + response.status);
+    }
+
+    const html = await response.text();
+
+    return {
+      success: true,
+      html: html
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
 async function getTabs() {
   const tabs = await chrome.tabs.query({});
 
@@ -48,7 +78,6 @@ async function getTabs() {
   }));
 }
 
-// Get active tab
 async function getActiveTab() {
   const tabs = await chrome.tabs.query({
     active: true,
@@ -58,13 +87,12 @@ async function getActiveTab() {
   return tabs.length ? tabs[0] : null;
 }
 
-// Read text from the active webpage
 async function readPage() {
   try {
     const tab = await getActiveTab();
 
     if (!tab || !tab.id) {
-      throw new Error("No active tab found.");
+      throw new Error("No active tab.");
     }
 
     const results = await chrome.scripting.executeScript({
@@ -74,8 +102,9 @@ async function readPage() {
 
     return {
       success: true,
-      text: results[0].result.slice(0, 15000)
+      text: (results[0].result || "").slice(0, 15000)
     };
+
   } catch (error) {
     return {
       success: false,
@@ -84,7 +113,6 @@ async function readPage() {
   }
 }
 
-// Handle VECTOR commands
 chrome.runtime.onMessage.addListener(
   (message, sender, sendResponse) => {
 
@@ -92,16 +120,19 @@ chrome.runtime.onMessage.addListener(
       switch (message.type) {
 
         case "VECTOR_OPEN_URL":
-          return await openWebsite(message.url);
+          return openWebsite(message.url);
 
         case "VECTOR_SEARCH":
-          return await searchGoogle(message.query);
+          return searchGoogle(message.query);
+
+        case "VECTOR_WEB_SEARCH":
+          return searchWeb(message.query);
 
         case "VECTOR_GET_TABS":
-          return await getTabs();
+          return getTabs();
 
         case "VECTOR_GET_ACTIVE_TAB":
-          return await getActiveTab();
+          return getActiveTab();
 
         case "VECTOR_SWITCH_TAB":
           await chrome.tabs.update(message.tabId, {
@@ -114,12 +145,12 @@ chrome.runtime.onMessage.addListener(
           return { success: true };
 
         case "VECTOR_READ_PAGE":
-          return await readPage();
+          return readPage();
 
         default:
           return {
             success: false,
-            error: "Unknown VECTOR command."
+            error: "Unknown command."
           };
       }
     };
@@ -135,4 +166,4 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-console.log("VECTOR background system ready!");
+console.log("VECTOR online search engine ready!");
