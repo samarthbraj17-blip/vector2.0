@@ -7,7 +7,7 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// OPEN A WEBSITE
+// OPEN WEBSITE
 async function openWebsite(url) {
   try {
     const parsed = new URL(url);
@@ -35,50 +35,152 @@ async function searchGoogle(query) {
   );
 }
 
-// ONLINE SEARCH USING DUCKDUCKGO
-async function searchWeb(query) {
-  try {
-    const body = new URLSearchParams();
-    body.append("q", query);
+// FETCH JSON SAFELY
+async function fetchJSON(url) {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { "Accept": "application/json" }
+  });
 
-    const response = await fetch(
-      "https://html.duckduckgo.com/html/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "text/html"
-        },
-        body: body.toString()
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        "Search website returned status " + response.status
-      );
-    }
-
-    const html = await response.text();
-
-    if (!html || html.length < 500) {
-      throw new Error("Search website returned an empty response.");
-    }
-
-    return {
-      success: true,
-      html: html
-    };
-
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
+  if (!response.ok) {
+    throw new Error("Request failed: " + response.status);
   }
+
+  return response.json();
 }
 
-// GET ALL OPEN TABS
+// WIKIPEDIA SEARCH
+async function searchWikipedia(query) {
+  const searchURL =
+    "https://en.wikipedia.org/w/api.php" +
+    "?action=query&list=search" +
+    "&srsearch=" + encodeURIComponent(query) +
+    "&srlimit=5&format=json";
+
+  const searchData = await fetchJSON(searchURL);
+
+  const pages = searchData.query?.search || [];
+
+  if (!pages.length) return [];
+
+  const pageIds = pages.map(page => page.pageid).join("|");
+
+  const extractURL =
+    "https://en.wikipedia.org/w/api.php" +
+    "?action=query&prop=extracts" +
+    "&explaintext=1&exintro=1" +
+    "&pageids=" + pageIds +
+    "&format=json";
+
+  const extractData = await fetchJSON(extractURL);
+
+  return pages.map(page => {
+    const article =
+      extractData.query?.pages?.[page.pageid];
+
+    return {
+      title: page.title,
+      snippet: article?.extract ||
+        page.snippet.replace(/<[^>]*>/g, ""),
+      url:
+        "https://en.wikipedia.org/?curid=" +
+        page.pageid,
+      source: "Wikipedia"
+    };
+  });
+}
+
+// DUCKDUCKGO INSTANT ANSWERS
+async function searchDuckDuckGo(query) {
+  const url =
+    "https://api.duckduckgo.com/" +
+    "?q=" + encodeURIComponent(query) +
+    "&format=json&no_html=1&skip_disambig=1";
+
+  const data = await fetchJSON(url);
+
+  const results = [];
+
+  if (data.AbstractText) {
+    results.push({
+      title: data.Heading || "Quick answer",
+      snippet: data.AbstractText,
+      url: data.AbstractURL || "https://duckduckgo.com/",
+      source: "DuckDuckGo"
+    });
+  }
+
+  if (data.Answer) {
+    results.push({
+      title: "Instant answer",
+      snippet: data.Answer,
+      url: data.AnswerURL || "https://duckduckgo.com/",
+      source: "DuckDuckGo"
+    });
+  }
+
+  function collectTopics(topics) {
+    for (const item of topics || []) {
+      if (item.Topics) {
+        collectTopics(item.Topics);
+      } else if (item.Text) {
+        results.push({
+          title: item.FirstURL || "Related information",
+          snippet: item.Text,
+          url: item.FirstURL || "https://duckduckgo.com/",
+          source: "DuckDuckGo"
+        });
+      }
+
+      if (results.length >= 5) break;
+    }
+  }
+
+  collectTopics(data.RelatedTopics);
+
+  return results.slice(0, 5);
+}
+
+// MULTI-SOURCE ONLINE SEARCH
+async function searchWeb(query) {
+  const results = [];
+  const errors = [];
+
+  // Try Wikipedia
+  try {
+    const wikiResults = await searchWikipedia(query);
+    results.push(...wikiResults);
+  } catch (error) {
+    errors.push("Wikipedia: " + error.message);
+  }
+
+  // Try DuckDuckGo
+  try {
+    const ddgResults = await searchDuckDuckGo(query);
+    results.push(...ddgResults);
+  } catch (error) {
+    errors.push("DuckDuckGo: " + error.message);
+  }
+
+  // Remove duplicate links
+  const uniqueResults = [];
+  const seen = new Set();
+
+  for (const result of results) {
+    if (!seen.has(result.url)) {
+      seen.add(result.url);
+      uniqueResults.push(result);
+    }
+  }
+
+  return {
+    success: uniqueResults.length > 0,
+    results: uniqueResults.slice(0, 8),
+    errors: errors
+  };
+}
+
+// GET OPEN TABS
 async function getTabs() {
   const tabs = await chrome.tabs.query({});
 
@@ -118,7 +220,6 @@ async function readPage() {
       success: true,
       text: (results[0].result || "").slice(0, 15000)
     };
-
   } catch (error) {
     return {
       success: false,
@@ -127,13 +228,12 @@ async function readPage() {
   }
 }
 
-// RECEIVE VECTOR COMMANDS
+// HANDLE VECTOR COMMANDS
 chrome.runtime.onMessage.addListener(
   (message, sender, sendResponse) => {
 
     async function handleCommand() {
       switch (message.type) {
-
         case "VECTOR_OPEN_URL":
           return openWebsite(message.url);
 
@@ -184,4 +284,4 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-console.log("VECTOR online search engine ready!");
+console.log("VECTOR multi-source search ready!");
