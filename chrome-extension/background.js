@@ -1,5 +1,4 @@
 
-
 chrome.runtime.onInstalled.addListener(() => {
   console.log("VECTOR installed!");
 
@@ -8,6 +7,7 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// OPEN A WEBSITE
 async function openWebsite(url) {
   try {
     const parsed = new URL(url);
@@ -27,6 +27,7 @@ async function openWebsite(url) {
   }
 }
 
+// GOOGLE SEARCH
 async function searchGoogle(query) {
   return openWebsite(
     "https://www.google.com/search?q=" +
@@ -34,25 +35,35 @@ async function searchGoogle(query) {
   );
 }
 
-// FREE ONLINE WEB SEARCH
+// ONLINE SEARCH USING DUCKDUCKGO
 async function searchWeb(query) {
   try {
-    const url =
-      "https://html.duckduckgo.com/html/?q=" +
-      encodeURIComponent(query);
+    const body = new URLSearchParams();
+    body.append("q", query);
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Accept": "text/html"
+    const response = await fetch(
+      "https://html.duckduckgo.com/html/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "text/html"
+        },
+        body: body.toString()
       }
-    });
+    );
 
     if (!response.ok) {
-      throw new Error("Search service returned " + response.status);
+      throw new Error(
+        "Search website returned status " + response.status
+      );
     }
 
     const html = await response.text();
+
+    if (!html || html.length < 500) {
+      throw new Error("Search website returned an empty response.");
+    }
 
     return {
       success: true,
@@ -67,6 +78,7 @@ async function searchWeb(query) {
   }
 }
 
+// GET ALL OPEN TABS
 async function getTabs() {
   const tabs = await chrome.tabs.query({});
 
@@ -78,6 +90,7 @@ async function getTabs() {
   }));
 }
 
+// GET ACTIVE TAB
 async function getActiveTab() {
   const tabs = await chrome.tabs.query({
     active: true,
@@ -87,6 +100,7 @@ async function getActiveTab() {
   return tabs.length ? tabs[0] : null;
 }
 
+// READ CURRENT PAGE
 async function readPage() {
   try {
     const tab = await getActiveTab();
@@ -113,10 +127,11 @@ async function readPage() {
   }
 }
 
+// RECEIVE VECTOR COMMANDS
 chrome.runtime.onMessage.addListener(
   (message, sender, sendResponse) => {
 
-    const handleCommand = async () => {
+    async function handleCommand() {
       switch (message.type) {
 
         case "VECTOR_OPEN_URL":
@@ -135,9 +150,10 @@ chrome.runtime.onMessage.addListener(
           return getActiveTab();
 
         case "VECTOR_SWITCH_TAB":
-          await chrome.tabs.update(message.tabId, {
-            active: true
-          });
+          await chrome.tabs.update(
+            message.tabId,
+            { active: true }
+          );
           return { success: true };
 
         case "VECTOR_CLOSE_TAB":
@@ -153,14 +169,16 @@ chrome.runtime.onMessage.addListener(
             error: "Unknown command."
           };
       }
-    };
+    }
 
     handleCommand()
       .then(sendResponse)
-      .catch(error => sendResponse({
-        success: false,
-        error: error.message
-      }));
+      .catch(error => {
+        sendResponse({
+          success: false,
+          error: error.message
+        });
+      });
 
     return true;
   }
